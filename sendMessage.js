@@ -9,21 +9,25 @@ const LINE_MESSAGING_BASE_URL = scriptProperties.getProperty(
 );
 const SOURCE = "LINE";
 
+const groupId = {
+  aircon: scriptProperties.getProperty("AIT_CONDITIO_GROUP_ID"),
+};
+
 const GROUP_ID = {
   aircon: scriptProperties.getProperty("AIR_CONDITION_GROUP_ID"),
   civil: scriptProperties.getProperty("CIVIL_GROUP_ID"),
   dev: scriptProperties.getProperty("DEV_GROUP_ID") || "not found",
   elec: scriptProperties.getProperty("ELECTRIC_GROUP_ID"),
-  plumber: scriptProperties.getProperty("PLUMBER_GROUP_ID"),
   kdmc: scriptProperties.getProperty("KDMC_GROUP_ID"),
+  plumber: scriptProperties.getProperty("PLUMBER_GROUP_ID"),
 };
 
 const PROBLEM_TYPE = {
   aircon: "อาคารสถานที่ - ปรับอากาศ",
-  plumber: "อาคารสถานที่ - ประปา + สุขภัณฑ์",
   civil: "อาคารสถานที่ - วัสดุ + ครุภัณฑ์",
   elec: "อาคารสถานที่ - ไฟฟ้า + โทรศัพท์",
   kdmc: "ศูนย์ KDMC - คอมพิวเตอร์เเละอุปกรณ์ต่อพ่วง",
+  plumber: "อาคารสถานที่ - ประปา + สุขภัณฑ์",
 };
 
 function handleEvent(e) {
@@ -43,39 +47,85 @@ function handleEvent(e) {
   const reporter = data[10];
   const time = data[7];
 
-  const msg =
-    "++++++++++++++++ \n\n" +
-    "สถานที่: " +
-    place +
-    "\n\n" +
-    "รายละเอียดสถานที่: " +
-    placeDescription +
-    "\n\n" +
-    "ประเภทปัญหา: " +
-    problemType +
-    "\n\n" +
-    "คําอธิบาย: " +
-    description +
-    "\n\n" +
-    "เวลา: " +
-    time +
-    "\n" +
-    "วันที่: " +
-    date +
-    "\n\n" +
-    "ผู้เเจ้ง: " +
-    reporter +
-    "\n\n" +
-    "ลิงก์รูปภาพ: " +
-    shorterUrl;
+  let message = "";
+  if (problemType === PROBLEM_TYPE.kdmc) {
+    const kmdcProblem1 = data[34];
+    const kmdcProblem2 = data[35];
+    const kmdcProblem3 = data[36];
+    const kmdcProblem4 = data[37];
+    let operation =
+      kmdcProblem1 !== ""
+        ? kmdcProblem1
+        : kmdcProblem2 !== ""
+        ? kmdcProblem2
+        : kmdcProblem3 !== ""
+        ? kmdcProblem3
+        : kmdcProblem4 !== ""
+        ? kmdcProblem4
+        : "Not found";
+
+    message =
+      "++++++++++++++++ \n\n" +
+      "สถานที่: " +
+      place +
+      "\n\n" +
+      "รายละเอียดสถานที่: " +
+      placeDescription +
+      "\n\n" +
+      "ประเภทปัญหา: " +
+      problemType +
+      "\n\n" +
+      "การดำเนินการ: " +
+      operation +
+      "\n\n" +
+      "คำอธิบาย: " +
+      description +
+      "\n\n" +
+      "เวลา: " +
+      time +
+      "\n" +
+      "วันที่: " +
+      date +
+      "\n\n" +
+      "ลิงก์รูปภาพ: " +
+      shorterUrl;
+  } else {
+    message =
+      "++++++++++++++++ \n\n" +
+      "สถานที่: " +
+      place +
+      "\n\n" +
+      "รายละเอียดสถานที่: " +
+      placeDescription +
+      "\n\n" +
+      "ประเภทปัญหา: " +
+      problemType +
+      "\n\n" +
+      "คําอธิบาย: " +
+      description +
+      "\n\n" +
+      "เวลา: " +
+      time +
+      "\n" +
+      "วันที่: " +
+      date +
+      "\n\n" +
+      "ผู้เเจ้ง: " +
+      reporter +
+      "\n\n" +
+      "ลิงก์รูปภาพ: " +
+      shorterUrl;
+  }
+
   sendLineMessagingApi("สวัสดีชาวโลก", "dev");
 
   // DEV
   // const problemType = data[15];
-  // sendLineMessagingApi(msg, problemType);
+  // sendLineMessagingApi(message, problemType);
 }
 
 // Send message Line OA using groupId or userId
+
 function sendLineMessagingApi(text, target) {
   const url = `${LINE_MESSAGING_BASE_URL}/v2/bot/message/push`;
   const channelAccessToken = CHANNEL_ACCESS_TOKEN;
